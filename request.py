@@ -56,30 +56,32 @@ def chatbot_response(user_input):
     # Agora, retornamos o dicionário
     return tech_words_detected
 
-def format_response(tech_words_detected):
+def format_response(tech_words_detected, habilidades_necessarias):
     habilidades_descritas = []
     habilidades_relacionadas = []
+    habilidades_faltantes = list(habilidades_necessarias)
 
     for word, similarity in tech_words_detected.items():
         if similarity == 0:
             habilidades_descritas.append(word)
+            # Remove das habilidades faltantes se foi descrita
+            if word in habilidades_faltantes:
+                habilidades_faltantes.remove(word)
         else:
             habilidades_relacionadas.append(f"{word} (similaridade: {round(similarity, 3)})")
     
-    response = ""
-    if habilidades_descritas:
-        response += f"Habilidades descritas pelo colaborador: {', '.join(habilidades_descritas)}.\n"
-    if habilidades_relacionadas:
-        response += f"Habilidades relacionadas às descritas pelo colaborador: {', '.join(habilidades_relacionadas)}."
-
-    return response
+    return {
+        'habilidades_descritas': habilidades_descritas,
+        'habilidades_relacionadas': habilidades_relacionadas,
+        'habilidades_faltantes': habilidades_faltantes
+    }
 
 nltk.download('punkt')
 
 ferramentas_linguagens = set([
     # Linguagens de Programação
     'python', 'java', 'javascript', 'c++', 'c#', 'ruby', 'php', 'swift',
-    'typescript', 'kotlin', 'scala', 'perl', 'html', 'css', 'sql', 'node',
+    'typescript', 'kotlin', 'scala', 'perl', 'html', 'css', 'sql', 'node.js',
     'react', 'reactnative',
     
     # Ferramentas de Desenvolvimento
@@ -88,24 +90,38 @@ ferramentas_linguagens = set([
     'postman', 'selenium', 'trello', 'apache', 'mysql', 'postgresql', 'mongodb'
 ])
 
+# Dicionário de grupos com habilidades necessárias
+grupos_habilidades = {
+    "desenvolvedor web": {'html', 'css', 'javascript', 'react', 'node.js', 'git', 'docker', 'mysql'},
+    "desenvolvedor mobile": {'java', 'kotlin', 'swift', 'reactnative', 'git', 'docker', 'sqlite'}
+}
+
 # Endpoint para receber a request com JSON e retornar a resposta
 @app.route('/analyze', methods=['POST'])
 def analyze_message():
     data = request.get_json()
 
-    # Verifica se a chave 'message' está presente no JSON
-    if 'message' not in data:
-        return jsonify({'error': 'O campo "message" é obrigatório.'}), 400
+    # Verifica se o JSON contém os campos 'message' e 'grupo'
+    if 'message' not in data or 'grupo' not in data:
+        return jsonify({'error': 'Os campos "message" e "grupo" são obrigatórios.'}), 400
 
     user_input = data['message']
+    grupo = data['grupo']
+
+    # Verifica se o grupo informado existe no dicionário
+    if grupo not in grupos_habilidades:
+        return jsonify({'error': f'Grupo "{grupo}" não encontrado. Grupos disponíveis: {list(grupos_habilidades.keys())}'}), 400
+
+    # Habilidades necessárias para o grupo
+    habilidades_necessarias = grupos_habilidades[grupo]
 
     # Obtemos o dicionário de palavras detectadas e suas similaridades
     detected_words = chatbot_response(user_input)
 
-    # Formata a resposta final
-    formatted_response = format_response(detected_words)
+    # Formata a resposta final, incluindo as habilidades faltantes
+    formatted_response = format_response(detected_words, habilidades_necessarias)
 
-    return jsonify({'response': formatted_response})
+    return jsonify(formatted_response)
 
 # Inicia o servidor Flask
 if __name__ == '__main__':
