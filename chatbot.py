@@ -35,7 +35,7 @@ def most_similar_word(word, tech_words, embeddings_index):
 
 def chatbot_response(user_input):
     tokens = word_tokenize(user_input.lower())
-    tech_words_detected = []
+    tech_words_detected = {}
 
     # Define um limite para a similaridade (quanto menor, mais relevante)
     similarity_threshold = 0.5
@@ -43,14 +43,17 @@ def chatbot_response(user_input):
     for token in tokens:
         similar_tech_word, similarity = most_similar_word(token, ferramentas_linguagens, glove_embeddings)
         if similar_tech_word and similarity <= similarity_threshold:
-            tech_words_detected.append((similar_tech_word, similarity))
+            # Se a palavra já foi detectada, mantemos a de menor similaridade
+            if (similar_tech_word not in tech_words_detected or 
+                    similarity < tech_words_detected[similar_tech_word]):
+                tech_words_detected[similar_tech_word] = similarity
 
     # Ordena as palavras detectadas pela similaridade (menor valor = mais próximo)
-    tech_words_detected.sort(key=lambda x: x[1])
+    sorted_tech_words = sorted(tech_words_detected.items(), key=lambda x: x[1])
 
-    if tech_words_detected:
+    if sorted_tech_words:
         # Mostra as 3 palavras mais influentes com suas similaridades
-        top_words_with_similarity = [(word, round(similarity, 3)) for word, similarity in tech_words_detected]
+        top_words_with_similarity = [(word, round(similarity, 3)) for word, similarity in sorted_tech_words]
         return f"Palavras mais influentes: {', '.join([f'{word} (similaridade: {similarity})' for word, similarity in top_words_with_similarity])}."
     else:
         return "Nenhuma palavra relacionada à tecnologia foi detectada."
@@ -60,8 +63,8 @@ nltk.download('punkt')
 ferramentas_linguagens = set([
     # Linguagens de Programação
     'python', 'java', 'javascript', 'c++', 'c#', 'ruby', 'php', 'swift',
-    'typescript', 'kotlin', 'scala', 'perl', 'html', 'css', 'sql', 'node'
-    'react', 'reactnative'
+    'typescript', 'kotlin', 'scala', 'perl', 'html', 'css', 'sql', 'node',
+    'react', 'reactnative',
     
     # Ferramentas de Desenvolvimento
     'git', 'github', 'gitlab', 'docker', 'kubernetes', 'jenkins', 'nginx', 
