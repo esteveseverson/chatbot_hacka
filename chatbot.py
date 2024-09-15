@@ -3,6 +3,8 @@ from scipy.spatial.distance import cosine
 import nltk
 from nltk.tokenize import word_tokenize
 
+# DATASET = https://www.kaggle.com/datasets/rtatman/glove-global-vectors-for-word-representation?resource=download&select=glove.6B.100d.txt
+
 def load_glove_embeddings(file_path):
     embeddings_index = {}
     with open(file_path, 'r', encoding='utf-8') as file:
