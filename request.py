@@ -68,7 +68,7 @@ def format_response(tech_words_detected, habilidades_necessarias):
             if word in habilidades_faltantes:
                 habilidades_faltantes.remove(word)
         else:
-            habilidades_relacionadas.append(f"{word} (similaridade: {round(similarity, 3)})")
+            habilidades_relacionadas.append(f"{word} tem a similaridade com o texto de {round(similarity, 3)} (quanto mais próximo de 0 mais relacionado com o texto)")
     
     return {
         'habilidades_descritas': habilidades_descritas,
