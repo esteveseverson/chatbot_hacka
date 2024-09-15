@@ -3,9 +3,11 @@ from scipy.spatial.distance import cosine
 import nltk
 from nltk.tokenize import word_tokenize
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 # Inicializa o Flask
 app = Flask(__name__)
+CORS(app)
 
 # Carrega os embeddings GloVe
 def load_glove_embeddings(file_path):
